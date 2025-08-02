@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+//TODO ADD WEATHER CONDITIONS
 @Entity
 @Table(name = "pricing_rules")
 public class PricingRule extends BaseEntity {

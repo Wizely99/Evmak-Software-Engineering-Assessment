@@ -20,6 +20,7 @@ public interface ParkingFacilityRepository extends JpaRepository<ParkingFacility
 
     List<ParkingFacility> findByFacilityTypeAndStatus(FacilityType facilityType, FacilityStatus status);
 
+    //raw Haversine formula
     @Query("""
             SELECT pf FROM ParkingFacility pf 
             WHERE pf.status = 'ACTIVE'

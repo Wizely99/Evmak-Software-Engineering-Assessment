@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
 import java.time.Instant;
-import java.time.LocalTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ParkingFacilityDto(
@@ -33,8 +32,8 @@ public record ParkingFacilityDto(
         @NotNull(message = "Total spots is required")
         @Min(value = 1, message = "Total spots must be at least 1")
         Integer totalSpots,
-        LocalTime operatingHoursStart,
-        LocalTime operatingHoursEnd,
+        String operatingHoursStart,
+        String operatingHoursEnd,
         FacilityStatus status,
         JsonNode features,
         @Min(value = 100, message = "Max height must be at least 100cm")

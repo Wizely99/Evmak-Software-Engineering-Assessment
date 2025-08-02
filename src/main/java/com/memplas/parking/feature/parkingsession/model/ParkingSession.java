@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+//TODO ONE CAR RESERVE AT A TIME
 @Entity
 @Table(name = "parking_sessions")
 public class ParkingSession extends BaseEntity {

@@ -6,7 +6,6 @@ import com.memplas.parking.feature.book.model.User;
 import com.memplas.parking.feature.facility.model.FacilityStatus;
 import com.memplas.parking.feature.facility.model.FacilityType;
 import com.memplas.parking.feature.facility.model.ParkingFacility;
-import com.memplas.parking.feature.facility.repository.FacilityAvailabilityCacheRepository;
 import com.memplas.parking.feature.facility.repository.ParkingFacilityRepository;
 import com.memplas.parking.feature.parkingspot.model.ParkingSpot;
 import com.memplas.parking.feature.parkingspot.model.SpotStatus;
@@ -41,17 +40,14 @@ public class DatabaseSeeder {
 
     private final PricingRuleRepository pricingRuleRepository;
 
-    private final FacilityAvailabilityCacheRepository cacheRepository;
-
     public DatabaseSeeder(UserRepository userRepository, VehicleRepository vehicleRepository,
                           ParkingFacilityRepository facilityRepository, ParkingSpotRepository spotRepository,
-                          PricingRuleRepository pricingRuleRepository, FacilityAvailabilityCacheRepository cacheRepository) {
+                          PricingRuleRepository pricingRuleRepository) {
         this.userRepository = userRepository;
         this.vehicleRepository = vehicleRepository;
         this.facilityRepository = facilityRepository;
         this.spotRepository = spotRepository;
         this.pricingRuleRepository = pricingRuleRepository;
-        this.cacheRepository = cacheRepository;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -139,29 +135,6 @@ public class DatabaseSeeder {
         }
         System.out.println("💰 Seeded pricing rules for " + facilities.size() + " facilities");
     }
-
-//    @Transactional(propagation = Propagation.REQUIRES_NEW)
-//    private void seedAvailabilityCache() {
-//        List<ParkingFacility> facilities = facilityRepository.findAll();
-//
-//        facilities.forEach(facility -> {
-//            try {
-//                FacilityAvailabilityCache cache = new FacilityAvailabilityCache(facility.getId());
-//                cache.setFacility(facility);
-//                cache.setTotalSpots(facility.getTotalSpots());
-//                cache.setAvailableSpots(facility.getTotalSpots());
-//                cache.setOccupiedSpots(0);
-//                cache.setReservedSpots(0);
-//                cache.setOutOfOrderSpots(0);
-//                cache.setCurrentOccupancyRate(BigDecimal.ZERO);
-//                cacheRepository.saveAndFlush(cache);  // Use saveAndFlush instead of save
-//            } catch (Exception e) {
-//                System.err.println("Failed to seed availability cache for facility: " + facility.getId());
-//                e.printStackTrace();
-//            }
-//        });
-//        System.out.println("⚡ Initialized availability cache for " + facilities.size() + " facilities");
-//    }
 
     private User createUser(String keycloakId, String email, String phone, String firstName, String lastName) {
         User user = new User();

@@ -83,11 +83,13 @@ public class ParkingSessionService {
 
         // Performance: Fail fast for unavailable spots
         if (spot.getStatus() != SpotStatus.AVAILABLE) {
-            return new ReservationResponseDto(
-                    null, spot.getId(), spot.getSpotNumber(),
-                    spot.getFacility().getName(), null, null, "TZS",
-                    "FAILED", "Spot is not available"
-            );
+            throw new RuntimeException("Spot is not available");
+        }
+        boolean exists = sessionRepository.existsByVehicleIdAndStatusIn(request.vehicleId(), List.of(SessionStatus.ACTIVE, SessionStatus.RESERVED));
+
+        if (exists) {
+            //TODO USE LESS GENERIC EXCEPTIONS
+            throw new RuntimeException("Vehicle already has an active or reserved parking session");
         }
 
         // Performance: Generate session reference without DB lookup
@@ -117,8 +119,6 @@ public class ParkingSessionService {
 
         ParkingSession savedSession = sessionRepository.save(session);
 
-        // Performance: Async cache update to avoid blocking reservation response
-        cacheService.refreshFacilityCache(spot.getFacility().getId());
 
         return reservationMapper.toReservationResponse(savedSession);
     }
@@ -175,7 +175,6 @@ public class ParkingSessionService {
         spot.setLastOccupiedAt(LocalDateTime.now());
 
         ParkingSession savedSession = sessionRepository.save(session);
-        cacheService.refreshFacilityCache(spot.getFacility().getId());
 
         return sessionMapper.toDto(savedSession);
     }
@@ -236,7 +235,6 @@ public class ParkingSessionService {
         spot.setReservedBy(null);
 
         ParkingSession savedSession = sessionRepository.save(session);
-        cacheService.refreshFacilityCache(spot.getFacility().getId());
 
         return sessionMapper.toDto(savedSession);
     }

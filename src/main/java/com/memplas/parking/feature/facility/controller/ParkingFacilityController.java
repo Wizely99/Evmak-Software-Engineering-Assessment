@@ -1,8 +1,8 @@
 package com.memplas.parking.feature.facility.controller;
 
-import com.memplas.parking.feature.facility.dto.FacilityAvailabilityDto;
 import com.memplas.parking.feature.facility.dto.ParkingFacilityDto;
 import com.memplas.parking.feature.facility.service.ParkingFacilityService;
+import com.memplas.parking.feature.parkingspot.dto.NearbyFacilitiesDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,7 +19,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/facilities")
@@ -87,7 +86,7 @@ public class ParkingFacilityController {
             @ApiResponse(responseCode = "200", description = "Nearby facilities retrieved successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid coordinates or radius")
     })
-    public List<FacilityAvailabilityDto> findNearbyFacilities(
+    public NearbyFacilitiesDto findNearbyFacilities(
             @Parameter(description = "Latitude (-90 to 90)") @RequestParam @DecimalMin(value = "-90.0") @DecimalMax(value = "90.0") BigDecimal latitude,
             @Parameter(description = "Longitude (-180 to 180)") @RequestParam @DecimalMin(value = "-180.0") @DecimalMax(value = "180.0") BigDecimal longitude,
             @Parameter(description = "Search radius in meters (100-50000)") @RequestParam(defaultValue = "1000") @Min(100) @Max(50000) Integer radiusMeters) {

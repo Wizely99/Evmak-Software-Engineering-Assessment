@@ -20,7 +20,7 @@ public interface ParkingSessionRepository extends JpaRepository<ParkingSession, 
 
     List<ParkingSession> findByUserIdAndStatus(Long userId, SessionStatus status);
 
-    List<ParkingSession> findBySpotId(Long spotId);
+    boolean existsByVehicleIdAndStatusIn(Long vehicleId, List<SessionStatus> statuses);
 
     List<ParkingSession> findBySpotIdAndStatus(Long spotId, SessionStatus status);
 

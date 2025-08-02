@@ -2,10 +2,9 @@ package com.memplas.parking.feature.facility.mapper;
 
 import com.memplas.parking.feature.facility.dto.ParkingFacilityDto;
 import com.memplas.parking.feature.facility.model.ParkingFacility;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
+
+import java.time.LocalTime;
 
 @Mapper(
         componentModel = MappingConstants.ComponentModel.SPRING,
@@ -16,6 +15,13 @@ public interface ParkingFacilityMapper {
 
     @Mapping(target = "parkingSpots", ignore = true)
     @Mapping(target = "pricingRules", ignore = true)
-    @Mapping(target = "availabilityCache", ignore = true)
+    @Mapping(target = "operatingHoursStart", source = "operatingHoursStart", qualifiedByName = "stringToLocalTime")
+    @Mapping(target = "operatingHoursEnd", source = "operatingHoursEnd", qualifiedByName = "stringToLocalTime")
     ParkingFacility toEntity(ParkingFacilityDto dto);
+
+    @Named("stringToLocalTime")
+    public static LocalTime stringToLocalTime(String time) {
+        return time != null ? LocalTime.parse(time) : null;
+    }
+
 }

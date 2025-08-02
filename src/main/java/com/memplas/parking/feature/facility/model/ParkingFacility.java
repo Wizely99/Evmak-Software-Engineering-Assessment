@@ -21,6 +21,8 @@ public class ParkingFacility extends BaseEntity {
     @Size(max = 100, message = "Name must not exceed 100 characters")
     private String name;
 
+    private Integer totalFloorCount;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @NotNull(message = "Facility type is required")
@@ -66,14 +68,19 @@ public class ParkingFacility extends BaseEntity {
     @OneToMany(mappedBy = "facility", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<PricingRule> pricingRules = new HashSet<>();
 
-    @OneToOne(mappedBy = "facility", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private FacilityAvailabilityCache availabilityCache;
-
     // Constructors
     public ParkingFacility() {}
 
     public ParkingFacility(Long id) {
         super(id);
+    }
+
+    public Integer getTotalFloorCount() {
+        return totalFloorCount;
+    }
+
+    public void setTotalFloorCount(Integer totalFloorCount) {
+        this.totalFloorCount = totalFloorCount;
     }
 
     // Getters and Setters
@@ -129,7 +136,4 @@ public class ParkingFacility extends BaseEntity {
 
     public void setPricingRules(Set<PricingRule> pricingRules) {this.pricingRules = pricingRules;}
 
-    public FacilityAvailabilityCache getAvailabilityCache() {return availabilityCache;}
-
-    public void setAvailabilityCache(FacilityAvailabilityCache availabilityCache) {this.availabilityCache = availabilityCache;}
 }

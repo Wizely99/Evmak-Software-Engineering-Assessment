@@ -41,14 +41,15 @@ public class PricingService {
             return BigDecimal.valueOf(1000.00); // 1000 TZS default
         }
 
-        PricingRule rule = applicableRules.get(0); // Most specific rule first
+        PricingRule rule = applicableRules.getFirst(); // Most specific rule first
         BigDecimal baseRate = rule.getBaseRate();
 
         // Apply demand-based pricing multiplier
-        var availability = cacheService.getFacilityAvailability(facilityId);
-        if (availability.currentOccupancyRate().compareTo(BigDecimal.valueOf(rule.getOccupancyThreshold())) >= 0) {
+        var availability = cacheService.getFacilityAvailability(List.of(facilityId)).getFirst();
+        if (availability.currentOccupancyRate() >= rule.getOccupancyThreshold()) {
             baseRate = baseRate.multiply(rule.getDemandMultiplier());
         }
+
 
         // Calculate total amount (hourly rate * duration in hours)
         BigDecimal hours = BigDecimal.valueOf(durationMinutes).divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);

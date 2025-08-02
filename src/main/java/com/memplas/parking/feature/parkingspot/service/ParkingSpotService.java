@@ -47,11 +47,7 @@ public class ParkingSpotService {
         if (!expiredSpots.isEmpty()) {
             int releasedCount = spotRepository.releaseExpiredReservations(expiredTime);
 
-            // Performance: Batch update cache for affected facilities
-            expiredSpots.stream()
-                    .map(spot -> spot.getFacility().getId())
-                    .distinct()
-                    .forEach(cacheService::refreshFacilityCache);
+            cacheService.evictAllCache();
 
             System.out.printf("Released %d expired reservations%n", releasedCount);
         }

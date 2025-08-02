@@ -2,6 +2,7 @@ package com.memplas.parking.feature.parkingspot.model;
 
 import com.memplas.parking.core.model.BaseEntity;
 import com.memplas.parking.feature.book.model.User;
+import com.memplas.parking.feature.facility.model.Floor;
 import com.memplas.parking.feature.facility.model.ParkingFacility;
 import com.memplas.parking.feature.parkingsession.model.ParkingSession;
 import com.memplas.parking.feature.parkingviolation.model.Violation;
@@ -32,11 +33,20 @@ public class ParkingSpot extends BaseEntity {
     @Column(nullable = false)
     private SpotType spotType = SpotType.REGULAR;
 
+    @ManyToOne
+    @JoinColumn(name = "floor_id")
+    private Floor floor;
+
+    private Integer col;
+
+    private Integer row;
+
     @Column(nullable = false)
     private Integer floorLevel = 0;
 
     @Column(length = 50)
     @Size(max = 50, message = "Zone must not exceed 50 characters")
+    @Deprecated(forRemoval = true)
     private String zone;
 
     @Enumerated(EnumType.STRING)
@@ -57,6 +67,10 @@ public class ParkingSpot extends BaseEntity {
     @OneToMany(mappedBy = "spot", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Violation> violations = new HashSet<>();
 
+    public Floor getFloor() {return floor;}
+
+    public void setFloor(Floor floor) {this.floor = floor;}
+
     // Constructors
     public ParkingSpot() {}
 
@@ -68,6 +82,22 @@ public class ParkingSpot extends BaseEntity {
     public ParkingFacility getFacility() {return facility;}
 
     public void setFacility(ParkingFacility facility) {this.facility = facility;}
+
+    public Integer getCol() {
+        return col;
+    }
+
+    public void setCol(Integer col) {
+        this.col = col;
+    }
+
+    public Integer getRow() {
+        return row;
+    }
+
+    public void setRow(Integer row) {
+        this.row = row;
+    }
 
     public String getSpotNumber() {return spotNumber;}
 

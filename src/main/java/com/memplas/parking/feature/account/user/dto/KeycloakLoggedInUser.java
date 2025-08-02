@@ -15,7 +15,7 @@ public record KeycloakLoggedInUser(
         String phoneNumber,
         boolean isAdmin,
         List<String> roles) {
-    public static final Long userId2 = 12L;
+    public static final Long userId2 = 1L;//TODO CHANGE THIS GET USER FROM DASHBOARD
 
     public static KeycloakLoggedInUser fromJwt(Jwt jwt) {
         Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");

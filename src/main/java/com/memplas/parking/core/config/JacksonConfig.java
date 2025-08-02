@@ -35,14 +35,6 @@ import java.util.Set;
  */
 @Configuration
 public class JacksonConfig {
-//    @Bean
-//    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
-//        ObjectMapper mapper = builder.createXmlMapper(false).build();
-//        mapper.registerModule(new JavaTimeModule());
-//        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-//        return mapper;
-//    }
-
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
         return builder ->
