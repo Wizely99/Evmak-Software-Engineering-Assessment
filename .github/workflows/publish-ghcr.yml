@@ -74,4 +74,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/wizely99/${{ github.event.repository.name }}:${{ env.CURRENT_VERSION }}
+          tags: ghcr.io/wizely99/parking:latest
