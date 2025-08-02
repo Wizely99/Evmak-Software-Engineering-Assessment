@@ -191,10 +191,10 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <image>
-                        <name>yesidtech/${project.artifactId}</name>
+                        <name>quenchx/${project.artifactId}</name>
                         <tags>
-                            <tag>yesidtech/${project.artifactId}</tag>
-                            <tag>yesidtech/${project.artifactId}:${project.version}</tag>
+                            <tag>quenchx/${project.artifactId}</tag>
+                            <tag>quenchx/${project.artifactId}:${project.version}</tag>
                         </tags>
                     </image>
                 </configuration>
