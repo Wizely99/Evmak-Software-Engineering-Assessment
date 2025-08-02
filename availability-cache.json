@@ -1,0 +1,17 @@
+{
+  "11" : {
+    "facilityId" : 11,
+    "facilityName" : null,
+    "address" : null,
+    "locationLat" : null,
+    "locationLng" : null,
+    "totalSpots" : 200,
+    "availableSpots" : 199,
+    "occupiedSpots" : 0,
+    "reservedSpots" : 1,
+    "outOfOrderSpots" : 0,
+    "currentOccupancyRate" : 0.50,
+    "currentHourlyRate" : null,
+    "lastUpdated" : "2025-08-02T03:05:54.077629741"
+  }
+}

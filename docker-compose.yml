@@ -1,0 +1,63 @@
+services:
+  client-portal-app:
+    image:  yesidtech/client-parking-api:latest
+    container_name: client-parking-backend
+    depends_on:
+      - client-parking-db
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_HOST=client-parking-db
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - MAIL_USERNAME=prod-email@gmail.com
+      - MAIL_PASSWORD=prod-email-password
+      - KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+      - ADMIN_CLI_CLIENT_SECRET=${ADMIN_CLI_CLIENT_SECRET}
+      - API_GATEWAY_URL=${API_GATEWAY_URL}
+    ports:
+      - "8080"
+    networks:
+      - client-parking-network
+      - nginx-proxy-manager_default
+
+  client-portal-db:
+    image: postgres
+    container_name: client-parking-db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432"
+    networks:
+      - client-parking-network
+
+  client-portal-frontend:
+    image: yesidtech/client-parking:latest
+    container_name: client-parking-frontend
+    environment:
+      SPRING_API_URL: ${SPRING_API_URL}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      AUTH_ISSUER: ${AUTH_ISSUER}
+      END_SESSION_URL: ${END_SESSION_URL}
+      REFRESH_TOKEN_URL: ${REFRESH_TOKEN_URL}
+    ports:
+      - "3000"
+    depends_on:
+      - client-parking-app
+    networks:
+      - client-parking-network
+      - nginx-proxy-manager_default
+
+networks:
+  client-portal-network:
+    driver: bridge
+  nginx-proxy-manager_default:
+    external: true
