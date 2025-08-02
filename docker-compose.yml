@@ -1,63 +1,101 @@
 services:
-  client-portal-app:
-    image:  yesidtech/client-parking-api:latest
-    container_name: client-parking-backend
+  parking-app:
+    image: ghcr.io/wizely99/parking:latest
+    container_name: parking-api
     depends_on:
-      - client-parking-db
+      - parking-db
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - DB_HOST=client-parking-db
-      - DB_PORT=5432
-      - DB_NAME=${POSTGRES_DB}
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
-      - MAIL_USERNAME=prod-email@gmail.com
-      - MAIL_PASSWORD=prod-email-password
+      - SPRING_PROFILES_ACTIVE=herman
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
       - KEYCLOAK_SERVER_URL=${KEYCLOAK_SERVER_URL}
       - KEYCLOAK_REALM=${KEYCLOAK_REALM}
       - ADMIN_CLI_CLIENT_SECRET=${ADMIN_CLI_CLIENT_SECRET}
-      - API_GATEWAY_URL=${API_GATEWAY_URL}
-    ports:
-      - "8080"
-    networks:
-      - client-parking-network
-      - nginx-proxy-manager_default
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.parkingapi.priority=900"
+      - "traefik.http.routers.parkingapi.rule=Host(`parking-api.quenchx.com`)"
+      - "traefik.http.routers.parkingapi.entrypoints=websecure"
+      - "traefik.http.routers.parkingapi.tls.certresolver=production"
+      - "traefik.http.routers.parkingapi.tls=true"
+      - "traefik.docker.network=traefik_network"
 
-  client-portal-db:
-    image: postgres
-    container_name: client-parking-db
+    ports:
+      - "8088:8080"
+    networks:
+      - parking-network
+      - "traefik_network"
+
+    restart: unless-stopped
+
+
+  parking-db:
+    image: postgis/postgis:17-3.5-alpine
+    container_name: parking-db
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     ports:
-      - "5432"
+      - "5404:5432"
     networks:
-      - client-parking-network
+      - parking-network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    restart: unless-stopped
 
-  client-portal-frontend:
-    image: yesidtech/client-parking:latest
-    container_name: client-parking-frontend
+
+  parking-frontend:
+    image: ghcr.io/wizely99/thesa-loan:latest
+    container_name: parking-frontend
     environment:
-      SPRING_API_URL: ${SPRING_API_URL}
-      NEXTAUTH_URL: ${NEXTAUTH_URL}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
-      KEYCLOAK_URL: ${KEYCLOAK_URL}
-      AUTH_ISSUER: ${AUTH_ISSUER}
-      END_SESSION_URL: ${END_SESSION_URL}
-      REFRESH_TOKEN_URL: ${REFRESH_TOKEN_URL}
+      - SPRING_API_URL=${SPRING_API_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+      - AUTH_ISSUER=${AUTH_ISSUER}
+      - END_SESSION_URL=${END_SESSION_URL}
+      - REFRESH_TOKEN_URL=${REFRESH_TOKEN_URL}
+      - API_GATEWAY_BASE_URL=example.com
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.parking.priority=900"
+      - "traefik.http.routers.parking.rule=Host(`parking.quenchx.com`)"
+      - "traefik.http.routers.parking.entrypoints=websecure"
+      - "traefik.http.routers.parking.tls.certresolver=production"
+      - "traefik.http.routers.parking.tls=true"
+      - "traefik.docker.network=traefik_network"
     ports:
-      - "3000"
+      - "3001:3000"
     depends_on:
-      - client-parking-app
+      - parking-app
+
     networks:
-      - client-parking-network
-      - nginx-proxy-manager_default
+      - "traefik_network"
+      - parking-network
+    restart: unless-stopped
+
+
+volumes:
+  pgdata:
+    driver: local
+  keycloak_data:
+    driver: local
 
 networks:
-  client-portal-network:
+  parking-network:
     driver: bridge
-  nginx-proxy-manager_default:
+    name: parking-network
+  traefik_network:
     external: true
