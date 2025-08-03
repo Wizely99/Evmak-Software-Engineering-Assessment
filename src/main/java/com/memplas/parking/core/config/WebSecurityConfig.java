@@ -36,8 +36,11 @@ public class WebSecurityConfig {
                     .requestMatchers(
                             HttpMethod.PUT,
                             "/public/**",
+
                             "/users/{id}/send-verification-email",
                             "/users/forgot-password");
+            web.ignoring().requestMatchers(HttpMethod.POST, "/public/**", "/mock-payment/**",
+                    "/api/mock-payment/**", "/users/{id}");
             web.ignoring()
                     .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .requestMatchers(
@@ -66,7 +69,7 @@ public class WebSecurityConfig {
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(
-                List.of("https://portal.yesid.tech/", "https://portal-api.yesid.tech/"));
+                List.of("https://parking.quenchx.com/", "https://parking-api.quenchx.com/"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

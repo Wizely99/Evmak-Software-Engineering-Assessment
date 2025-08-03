@@ -15,7 +15,7 @@ public class CaffeineCacheConfig {
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
-                CacheKeys.FACILITY_AVAILABILITY_CACHE
+                CacheKeys.FACILITY_AVAILABILITY_CACHE, CacheKeys.PRICING_RULE_CACHE
         );
         cacheManager.setCaffeine(caffeineSpec());
         return cacheManager;
