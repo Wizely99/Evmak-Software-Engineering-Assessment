@@ -4,6 +4,8 @@ import com.memplas.parking.feature.pricing.dto.PricingRuleDto;
 import com.memplas.parking.feature.pricing.service.PricingRuleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -11,12 +13,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/v1/pricing-rules")
+@RequestMapping("/pricing-rules")
 @Validated
 @Tag(name = "Pricing Rules", description = "Dynamic pricing rule management")
 public class PricingRuleController {
@@ -39,11 +40,34 @@ public class PricingRuleController {
         return pricingRuleService.createPricingRule(pricingRuleDto);
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get pricing rule by ID", description = "Retrieves pricing rule details by ID")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pricing rule retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = PricingRuleDto.class))),
+            @ApiResponse(responseCode = "404", description = "Pricing rule not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public PricingRuleDto getPricingRule(@PathVariable @Schema(description = "Pricing rule ID", example = "1") Long id) {
+        return pricingRuleService.getPricingRule(id);
+    }
+
     @GetMapping("/facility/{facilityId}")
-    @Operation(summary = "Get facility pricing rules", description = "Retrieves active pricing rules for facility. Public endpoint for transparency.")
-    @ApiResponse(responseCode = "200", description = "Pricing rules retrieved successfully")
-    public List<PricingRuleDto> getFacilityPricingRules(@Parameter(description = "Facility ID") @PathVariable Long facilityId) {
-        return pricingRuleService.getFacilityPricingRules(facilityId);
+    @Operation(summary = "Get pricing rule by facility", description = "Retrieves pricing rule for specific facility")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pricing rule retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = PricingRuleDto.class))),
+            @ApiResponse(responseCode = "404", description = "No pricing rule found for facility",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public PricingRuleDto getPricingRuleByFacility(@PathVariable @Schema(description = "Facility ID", example = "1") Long facilityId) {
+        return pricingRuleService.getPricingRuleByFacility(facilityId);
     }
 
     @PutMapping("/{id}")

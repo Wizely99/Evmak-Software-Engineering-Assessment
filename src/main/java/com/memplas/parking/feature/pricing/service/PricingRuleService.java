@@ -1,15 +1,20 @@
 package com.memplas.parking.feature.pricing.service;
 
-import com.memplas.parking.feature.account.user.helper.AuthenticatedUserProvider;
+import com.memplas.parking.feature.parkingspot.model.SpotType;
 import com.memplas.parking.feature.pricing.dto.PricingRuleDto;
 import com.memplas.parking.feature.pricing.mapper.PricingRuleMapper;
 import com.memplas.parking.feature.pricing.model.PricingRule;
+import com.memplas.parking.feature.pricing.model.WeatherCondition;
 import com.memplas.parking.feature.pricing.repository.PricingRuleRepository;
+import com.memplas.parking.feature.vehicle.model.VehicleType;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -19,50 +24,126 @@ public class PricingRuleService {
 
     private final PricingRuleMapper pricingRuleMapper;
 
-    private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final WeatherService weatherService;
+
+    private final EventService eventService;
 
     public PricingRuleService(PricingRuleRepository pricingRuleRepository,
                               PricingRuleMapper pricingRuleMapper,
-                              AuthenticatedUserProvider authenticatedUserProvider) {
+                              WeatherService weatherService,
+                              EventService eventService) {
         this.pricingRuleRepository = pricingRuleRepository;
         this.pricingRuleMapper = pricingRuleMapper;
-        this.authenticatedUserProvider = authenticatedUserProvider;
+        this.weatherService = weatherService;
+        this.eventService = eventService;
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('FACILITY_MANAGER')")
+    @Transactional(readOnly = true)
+    public BigDecimal calculatePricing(Long facilityId, SpotType spotType,
+                                       VehicleType vehicleType, int floorLevel,
+                                       int hours, LocalDateTime startTime) {
+        PricingRule rule = pricingRuleRepository.findByFacilityId(facilityId)
+                .orElseThrow(() -> new EntityNotFoundException("No pricing rule found for facility: " + facilityId));
+
+        // Determine time-based conditions
+        boolean isPeakHour = isPeakHour(startTime.toLocalTime());
+        boolean isOffPeak = isOffPeakHour(startTime.toLocalTime());
+
+        // Get external conditions
+        WeatherCondition weather = weatherService.getCurrentWeather(facilityId);
+        boolean isEvent = eventService.hasActiveEvent(facilityId, startTime);
+
+        // Calculate pricing
+        return rule.calculateRate(spotType, vehicleType, floorLevel,
+                hours, weather, isEvent, isPeakHour, isOffPeak);
+    }
+
     public PricingRuleDto createPricingRule(PricingRuleDto pricingRuleDto) {
-        PricingRule pricingRule = pricingRuleMapper.toEntity(pricingRuleDto);
-        PricingRule savedRule = pricingRuleRepository.save(pricingRule);
+        // Validate no existing rule for facility
+        if (pricingRuleRepository.existsByFacilityId(pricingRuleDto.facilityId())) {
+            throw new IllegalArgumentException("Pricing rule already exists for facility: " + pricingRuleDto.facilityId());
+        }
+
+        PricingRule rule = pricingRuleMapper.toEntity(pricingRuleDto);
+        PricingRule savedRule = pricingRuleRepository.save(rule);
+        evictPricingCache();
+
         return pricingRuleMapper.toDto(savedRule);
     }
 
-    // Public: Anyone can view pricing rules for transparency
     @Transactional(readOnly = true)
-    public List<PricingRuleDto> getFacilityPricingRules(Long facilityId) {
-        List<PricingRule> rules = pricingRuleRepository.findByFacilityIdAndIsActiveTrue(facilityId);
-        return rules.stream().map(pricingRuleMapper::toDto).toList();
+    public PricingRuleDto getPricingRule(Long id) {
+        PricingRule rule = pricingRuleRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Pricing rule not found: " + id));
+        return pricingRuleMapper.toDto(rule);
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('FACILITY_MANAGER')")
-    public PricingRuleDto updatePricingRule(Long id, PricingRuleDto pricingRuleDto) {
-        PricingRule existingRule = pricingRuleRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Pricing rule not found with id: " + id));
+    @Transactional(readOnly = true)
+    public PricingRuleDto getPricingRuleByFacility(Long facilityId) {
+        PricingRule rule = pricingRuleRepository.findByFacilityId(facilityId)
+                .orElseThrow(() -> new EntityNotFoundException("No pricing rule for facility: " + facilityId));
+        return pricingRuleMapper.toDto(rule);
+    }
 
+    @Transactional(readOnly = true)
+    public List<PricingRule> getAllPricingRules() {
+        return pricingRuleRepository.findAll();
+    }
+
+    public PricingRuleDto updatePricingRule(Long id, PricingRuleDto pricingRuleDto) {
         PricingRule updatedRule = pricingRuleMapper.toEntity(pricingRuleDto);
         updatedRule.setId(id);
-        updatedRule.setCreatedAt(existingRule.getCreatedAt());
 
         PricingRule savedRule = pricingRuleRepository.save(updatedRule);
+        evictPricingCache();
+
         return pricingRuleMapper.toDto(savedRule);
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('FACILITY_MANAGER')")
     public void deletePricingRule(Long id) {
-        PricingRule rule = pricingRuleRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Pricing rule not found with id: " + id));
+        if (!pricingRuleRepository.existsById(id)) {
+            throw new EntityNotFoundException("Pricing rule not found: " + id);
+        }
+        pricingRuleRepository.deleteById(id);
+        evictPricingCache();
+    }
 
-        // Soft delete by setting inactive
-        rule.setIsActive(false);
-        pricingRuleRepository.save(rule);
+    // Quick rate lookup for mobile apps
+    @Transactional(readOnly = true)
+    public BigDecimal getQuickRate(Long facilityId, SpotType spotType, VehicleType vehicleType) {
+        PricingRule rule = pricingRuleRepository.findByFacilityId(facilityId)
+                .orElseThrow(() -> new EntityNotFoundException("No pricing rule found for facility: " + facilityId));
+
+        BigDecimal baseRate = switch (spotType) {
+            case VIP -> rule.getVipRate();
+            case EV_CHARGING -> rule.getEvChargingRate();
+            default -> rule.getBaseRate();
+        };
+
+        // Apply vehicle type multiplier
+        return baseRate.multiply(getVehicleMultiplier(rule, vehicleType));
+    }
+
+    private boolean isPeakHour(LocalTime time) {
+        return (time.isAfter(LocalTime.of(6, 0)) && time.isBefore(LocalTime.of(9, 0))) ||
+                (time.isAfter(LocalTime.of(17, 0)) && time.isBefore(LocalTime.of(20, 0)));
+    }
+
+    private boolean isOffPeakHour(LocalTime time) {
+        return time.isAfter(LocalTime.of(22, 0)) || time.isBefore(LocalTime.of(6, 0));
+    }
+
+    private BigDecimal getVehicleMultiplier(PricingRule rule, VehicleType vehicleType) {
+        return switch (vehicleType) {
+            case MOTORCYCLE -> rule.getMotorcycleDiscount();
+            case TRUCK -> rule.getTruckSurcharge();
+            default -> BigDecimal.ONE;
+        };
+    }
+
+    @CacheEvict(value = {"pricingEstimate", "quickRate"}, allEntries = true)
+    private void evictPricingCache() {
+        // Cache eviction handled by annotation
     }
 }
+
