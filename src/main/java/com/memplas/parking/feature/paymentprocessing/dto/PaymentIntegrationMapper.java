@@ -51,8 +51,6 @@ public class PaymentIntegrationMapper {
         request.put("payerName", dto.payerName());
         request.put("countryCode", "TZ");
         request.put("postalCode", "1021");
-        request.put("callbackUrl", dto.callbackUrl());
-        request.put("cancelUrl", dto.cancelUrl());
         return request;
     }
 }

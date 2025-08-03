@@ -2,6 +2,7 @@ package com.memplas.parking.feature.paymentprocessing.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.memplas.parking.feature.paymentprocessing.model.PaymentMethod;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,8 +31,7 @@ public record PaymentRequestDto(
         String phoneNumber,
         @NotBlank(message = "Callback URL is required")
         String callbackUrl,
-        @NotBlank(message = "Cancel URL is required")
-        String cancelUrl,
+        @Schema(hidden = true)
         @NotBlank(message = "payment reference is required")
         String paymentReference
 ) {}

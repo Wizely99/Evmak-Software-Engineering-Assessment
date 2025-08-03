@@ -1,49 +1,46 @@
 package com.memplas.parking.feature.paymentprocessing.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.memplas.parking.feature.paymentprocessing.model.PaymentMethod;
-import com.memplas.parking.feature.paymentprocessing.model.PaymentStatus;
+import com.memplas.parking.feature.paymentprocessing.model.PaymentProvider;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public record PaymentDto(
         @Schema(hidden = true)
         Long id,
         @NotNull(message = "Session ID is required")
+        @Positive(message = "Session ID must be positive")
+        @Schema(description = "Parking session ID", example = "123")
         Long sessionId,
         @NotBlank(message = "Payment reference is required")
         @Size(max = 100, message = "Payment reference must not exceed 100 characters")
+        @Schema(description = "Unique payment reference", example = "PARK-001-20250802")
         String paymentReference,
-        @Size(max = 255, message = "External payment ID must not exceed 255 characters")
-        String externalPaymentId,
         @NotNull(message = "Amount is required")
-        @DecimalMin(value = "0.0", message = "Amount must be non-negative")
+        @Positive(message = "Amount must be positive")
+        @Schema(description = "Payment amount", example = "5000.00")
         BigDecimal amount,
-        @NotBlank(message = "Currency is required")
-        @Size(min = 3, max = 3, message = "Currency must be 3 characters")
-        String currency,
         @NotNull(message = "Payment method is required")
+        @Schema(description = "Payment method")
         PaymentMethod paymentMethod,
-        @Size(max = 50, message = "Payment provider must not exceed 50 characters")
-        String paymentProvider,
-        PaymentStatus status,
-        @DecimalMin(value = "0.0", message = "Transaction fee must be non-negative")
-        BigDecimal transactionFee,
-        @Size(max = 255, message = "Failure reason must not exceed 255 characters")
-        String failureReason,
-        LocalDateTime processedAt,
-        JsonNode callbackData,
+        @NotNull(message = "Payment provider is required")
+        @Schema(description = "Payment provider")
+        PaymentProvider paymentProvider,
+        @Schema(description = "Currency code", example = "TZS")
+        String currency,
         @Schema(hidden = true)
+        String externalPaymentId,
+        @Schema(hidden = true)
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
         Instant createdAt,
         @Schema(hidden = true)
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
         Instant updatedAt
 ) {}
