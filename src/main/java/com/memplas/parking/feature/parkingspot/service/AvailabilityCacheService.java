@@ -2,18 +2,23 @@ package com.memplas.parking.feature.parkingspot.service;//package com.memplas.pa
 
 import com.memplas.parking.core.config.cache.CacheKeys;
 import com.memplas.parking.feature.parkingspot.dto.FacilityAvailabilityDto;
+import com.memplas.parking.feature.parkingspot.dto.FacilityHourlyRate;
 import com.memplas.parking.feature.parkingspot.dto.FacilitySpotCounts;
+import com.memplas.parking.feature.parkingspot.model.SpotType;
 import com.memplas.parking.feature.parkingspot.repository.ParkingSpotRepository;
+import com.memplas.parking.feature.pricing.model.WeatherCondition;
+import com.memplas.parking.feature.pricing.service.PricingRuleService;
+import com.memplas.parking.feature.vehicle.model.VehicleType;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Performance-Critical Service: Manages availability caching for sub-50ms responses
@@ -27,10 +32,13 @@ public class AvailabilityCacheService {
 
     private final CacheManager cacheManager;
 
+    private final PricingRuleService pricingRuleService;
+
     public AvailabilityCacheService(
-            ParkingSpotRepository spotRepository, CacheManager cacheManager) {
+            ParkingSpotRepository spotRepository, CacheManager cacheManager, PricingRuleService pricingRuleService) {
         this.spotRepository = spotRepository;
         this.cacheManager = cacheManager;
+        this.pricingRuleService = pricingRuleService;
     }
 
     public void recalculateCache(Cache cache) {
@@ -81,16 +89,37 @@ public class AvailabilityCacheService {
         //TODO CALCULATE THE RATE
         //IMPLEMENTATION STEPS
 //        PASS ALL CONDITIONS TO PRICING RULE AND RETURN ALL AT ONCE FROM DB
-
         var facilities = availableSpots.stream().map(spot -> {
             var totalSpots = spot.getTotalSpots();
             Integer occupancyRate = totalSpots > 0 ? (int) ((spot.occupiedSpots() + spot.reservedSpots()) * 100.0 / totalSpots) : 0;
-            return new FacilityAvailabilityDto(spot.facilityId(), totalSpots, spot.availableSpots(), spot.occupiedSpots(), spot.reservedSpots(), spot.outOfOrderSpots(), occupancyRate, null, now);
+            var hourlyRate = getRateForFacility(spot.facilityId());
+            return new FacilityAvailabilityDto(spot.facilityId(), totalSpots, spot.availableSpots(), spot.occupiedSpots(), spot.reservedSpots(), spot.outOfOrderSpots(), occupancyRate, hourlyRate, now);
         });
 
 
-        return facilities.collect(Collectors.toList());
+        return facilities.toList();
     }
 
+    private BigDecimal getRateForFacility(Long facilityId) {
+        Cache cache = cacheManager.getCache(CacheKeys.PRICING_RULE_CACHE);
+        if (cache == null) throw new IllegalStateException("Procong availability cache not configured");
+        BigDecimal rate = cache.get(facilityId, BigDecimal.class);
+        if (rate == null) {
+            recalculateRateCache();
+            rate = cache.get(facilityId, BigDecimal.class);
+        }
+        return rate;
+    }
 
+    private void recalculateRateCache() {
+        Cache cache = cacheManager.getCache(CacheKeys.PRICING_RULE_CACHE);
+        if (cache == null) throw new IllegalStateException("Facility availability cache not configured");
+        var rates = calculateFacilityRates();
+        rates.forEach(rate -> cache.put(rate.id(), rate.hourlyRate()));
+    }
+
+    private List<FacilityHourlyRate> calculateFacilityRates() {
+        return pricingRuleService.getAllPricingRules().stream().map(rule -> new FacilityHourlyRate(rule.getFacility().getId(), rule.calculateRate(SpotType.REGULAR, VehicleType.CAR, 1, 1, WeatherCondition.CLEAR, false, false, false))).toList();
+    }
 }
+

@@ -21,6 +21,7 @@ public record ParkingSpotDto(
         @Size(max = 20, message = "Spot number must not exceed 20 characters")
         String spotNumber,
         SpotType spotType,
+        Long floorId,
         Integer floorLevel,
         @Size(max = 50, message = "Zone must not exceed 50 characters")
         String zone,

@@ -106,8 +106,5 @@ public class ParkingSpotService {
                 .map(spotMapper::toDto);
     }
 
-    private Double calculateOccupancyRate(Long totalSpots, Long availableSpots) {
-        if (totalSpots == 0) return 0.0;
-        return ((double) (totalSpots - availableSpots) / totalSpots) * 100;
-    }
+
 }
