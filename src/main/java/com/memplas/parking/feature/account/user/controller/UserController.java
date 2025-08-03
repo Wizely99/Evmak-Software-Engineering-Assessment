@@ -18,7 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/users")
 @Validated
 @Tag(name = "Users", description = "User management operations")
 @SecurityRequirement(name = "bearerAuth")
@@ -62,18 +62,6 @@ public class UserController {
     public Page<UserDto> getAllUsers(@ParameterObject @PageableDefault(sort = "firstName") Pageable pageable) {
         return userService.getAllUsers(pageable);
     }
-
-//    @PutMapping("/{id}")
-//    @Operation(summary = "Update user", description = "Updates user profile. Users can update own profile, ADMINs can update any.")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "User updated successfully"),
-//            @ApiResponse(responseCode = "400", description = "Invalid user data"),
-//            @ApiResponse(responseCode = "403", description = "Access denied"),
-//            @ApiResponse(responseCode = "404", description = "User not found")
-//    })
-//    public UserDto updateUser(@Parameter(description = "User ID") @PathVariable Long id, @Valid @RequestBody UserDto userDto) {
-//        return userService.updateUser(id, userDto);
-//    }
 
 
 }
