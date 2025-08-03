@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/parking")
+@RequestMapping("/parking")
 @Validated
 @Tag(name = "Parking Sessions", description = "Parking reservation and session management")
 @SecurityRequirement(name = "bearerAuth")

@@ -13,7 +13,5 @@ public record ReservationResponseDto(
         String facilityName,
         LocalDateTime reservationExpiry,
         BigDecimal estimatedAmount,
-        String currency,
-        String status,
-        String message
+        String currency
 ) {}

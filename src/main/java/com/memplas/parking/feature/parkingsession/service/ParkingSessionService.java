@@ -14,8 +14,9 @@ import com.memplas.parking.feature.parkingspot.model.ParkingSpot;
 import com.memplas.parking.feature.parkingspot.model.SpotStatus;
 import com.memplas.parking.feature.parkingspot.repository.ParkingSpotRepository;
 import com.memplas.parking.feature.parkingspot.service.AvailabilityCacheService;
-import com.memplas.parking.feature.pricing.service.PricingService;
+import com.memplas.parking.feature.pricing.service.PricingRuleService;
 import com.memplas.parking.feature.vehicle.model.Vehicle;
+import com.memplas.parking.feature.vehicle.service.VehicleService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.dao.DataAccessException;
@@ -25,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -40,9 +43,9 @@ public class ParkingSessionService {
 
     private final ReservationMapper reservationMapper;
 
-    private final PricingService pricingService;
+    private final PricingRuleService pricingRuleService;
 
-    private final AvailabilityCacheService cacheService;
+    private final VehicleService vehicleService;
 
     private final AuthenticatedUserProvider authenticatedUserProvider;
 
@@ -50,16 +53,15 @@ public class ParkingSessionService {
             ParkingSessionRepository sessionRepository,
             ParkingSpotRepository spotRepository,
             ParkingSessionMapper sessionMapper,
-            ReservationMapper reservationMapper,
-            PricingService pricingService,
-            AvailabilityCacheService cacheService,
+            ReservationMapper reservationMapper, PricingRuleService pricingRuleService,
+            AvailabilityCacheService cacheService, VehicleService vehicleService,
             AuthenticatedUserProvider authenticatedUserProvider) {
         this.sessionRepository = sessionRepository;
         this.spotRepository = spotRepository;
         this.sessionMapper = sessionMapper;
         this.reservationMapper = reservationMapper;
-        this.pricingService = pricingService;
-        this.cacheService = cacheService;
+        this.pricingRuleService = pricingRuleService;
+        this.vehicleService = vehicleService;
         this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
@@ -73,32 +75,33 @@ public class ParkingSessionService {
             maxAttempts = 3,
             backoff = @Backoff(delay = 100, multiplier = 2)
     )
+
+    //TODO USE LESS GENERIC EXCEPTIONS
+
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public ReservationResponseDto reserveSpot(ReservationRequestDto request) {
         var currentUser = authenticatedUserProvider.getCurrentKeycloakUser();
 
-        // Performance: Single query with pessimistic write lock to prevent double-booking
         ParkingSpot spot = spotRepository.findById(request.spotId())
                 .orElseThrow(() -> new EntityNotFoundException("Spot not found"));
 
-        // Performance: Fail fast for unavailable spots
         if (spot.getStatus() != SpotStatus.AVAILABLE) {
             throw new RuntimeException("Spot is not available");
         }
         boolean exists = sessionRepository.existsByVehicleIdAndStatusIn(request.vehicleId(), List.of(SessionStatus.ACTIVE, SessionStatus.RESERVED));
 
         if (exists) {
-            //TODO USE LESS GENERIC EXCEPTIONS
             throw new RuntimeException("Vehicle already has an active or reserved parking session");
         }
-
-        // Performance: Generate session reference without DB lookup
-        // Format: PACK-RRRRTT where RRRR=random, TT=timestamp suffix
+        var vehicle = vehicleService.getVehicleById(request.vehicleId());
         String sessionRef = generateSessionReference();
+        int minutes = request.plannedDurationMinutes();
+        int hours = (int) Math.ceil(minutes / 60.0);
 
-        // Performance: Calculate pricing once before reservation
-        var estimatedAmount = pricingService.calculateEstimatedAmount(
-                spot.getFacility().getId(), request.plannedDurationMinutes());
+        var estimatedAmount = pricingRuleService.calculatePricing(
+                spot.getFacility().getId(), spot.getSpotType(), vehicle.vehicleType(),
+
+                spot.getFloorLevel(), hours, LocalDateTime.now());
 
         // Critical: Atomic spot reservation update
         spot.setStatus(SpotStatus.RESERVED);
@@ -223,10 +226,12 @@ public class ParkingSessionService {
 
         long durationMinutes = java.time.Duration.between(session.getStartTime(), endTime).toMinutes();
         session.setActualDurationMinutes((int) durationMinutes);
+        BigDecimal totalAmount = session.getTotalAmount();
+        long plannedMinutes = session.getPlannedDurationMinutes();
 
-        // Recalculate final amount based on actual duration
-        var finalAmount = pricingService.calculateEstimatedAmount(
-                session.getSpot().getFacility().getId(), (int) durationMinutes);
+        BigDecimal finalAmount = totalAmount
+                .multiply(BigDecimal.valueOf(durationMinutes))
+                .divide(BigDecimal.valueOf(plannedMinutes), 2, RoundingMode.HALF_UP);
         session.setTotalAmount(finalAmount);
 
         // Release spot

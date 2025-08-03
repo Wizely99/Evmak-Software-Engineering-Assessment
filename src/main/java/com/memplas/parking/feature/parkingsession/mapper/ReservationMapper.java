@@ -18,8 +18,5 @@ public interface ReservationMapper {
     @Mapping(target = "facilityName", source = "spot.facility.name")
     @Mapping(target = "reservationExpiry", source = "spot.reservationExpiry")
     @Mapping(target = "estimatedAmount", source = "totalAmount")
-    @Mapping(target = "status", ignore = true) // set manually
-    @Mapping(target = "message", ignore = true)
-        // set manually
     ReservationResponseDto toReservationResponse(ParkingSession session);
 }
