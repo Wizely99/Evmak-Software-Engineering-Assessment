@@ -1,16 +1,14 @@
 package com.memplas.parking.feature.facility.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.memplas.parking.core.model.BaseEntity;
 import com.memplas.parking.feature.parkingspot.model.ParkingSpot;
 import com.memplas.parking.feature.pricing.model.PricingRule;
-import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import org.hibernate.annotations.Type;
 
 import java.time.LocalTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -56,9 +54,10 @@ public class ParkingFacility extends BaseEntity {
     @Column(nullable = false)
     private FacilityStatus status = FacilityStatus.ACTIVE;
 
-    @Type(JsonType.class)
-    @Column(columnDefinition = "json")
-    private JsonNode features;
+    @ElementCollection
+    @CollectionTable(name = "facility_features", joinColumns = @JoinColumn(name = "facility_id"))
+    @Column(name = "feature")
+    private List<String> amenities;
 
     private Integer maxHeightCm;
 
@@ -120,9 +119,13 @@ public class ParkingFacility extends BaseEntity {
 
     public void setStatus(FacilityStatus status) {this.status = status;}
 
-    public JsonNode getFeatures() {return features;}
+    public List<String> getAmenities() {
+        return amenities;
+    }
 
-    public void setFeatures(JsonNode features) {this.features = features;}
+    public void setAmenities(List<String> amenities) {
+        this.amenities = amenities;
+    }
 
     public Integer getMaxHeightCm() {return maxHeightCm;}
 

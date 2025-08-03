@@ -1,13 +1,13 @@
 package com.memplas.parking.feature.facility.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.memplas.parking.feature.facility.model.FacilityStatus;
 import com.memplas.parking.feature.facility.model.FacilityType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ParkingFacilityDto(
@@ -35,7 +35,7 @@ public record ParkingFacilityDto(
         String operatingHoursStart,
         String operatingHoursEnd,
         FacilityStatus status,
-        JsonNode features,
+        List<String> features,
         @Min(value = 100, message = "Max height must be at least 100cm")
         Integer maxHeightCm,
         @Schema(hidden = true)

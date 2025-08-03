@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/v1/facilities")
+@RequestMapping("/facilities")
 @Validated
 @Tag(name = "Parking Facilities", description = "Parking facility management and availability")
 public class ParkingFacilityController {
