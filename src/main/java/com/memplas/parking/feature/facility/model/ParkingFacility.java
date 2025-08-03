@@ -54,6 +54,9 @@ public class ParkingFacility extends BaseEntity {
     @Column(nullable = false)
     private FacilityStatus status = FacilityStatus.ACTIVE;
 
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private Boolean wheelChairAccessible = true;
+
     @ElementCollection
     @CollectionTable(name = "facility_features", joinColumns = @JoinColumn(name = "facility_id"))
     @Column(name = "feature")
@@ -84,6 +87,14 @@ public class ParkingFacility extends BaseEntity {
 
     // Getters and Setters
     public String getName() {return name;}
+
+    public Boolean getWheelChairAccessible() {
+        return wheelChairAccessible;
+    }
+
+    public void setWheelChairAccessible(Boolean wheelChairAccessible) {
+        this.wheelChairAccessible = wheelChairAccessible;
+    }
 
     public void setName(String name) {this.name = name;}
 

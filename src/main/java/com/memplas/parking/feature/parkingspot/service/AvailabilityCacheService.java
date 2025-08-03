@@ -4,6 +4,7 @@ import com.memplas.parking.core.config.cache.CacheKeys;
 import com.memplas.parking.feature.parkingspot.dto.FacilityAvailabilityDto;
 import com.memplas.parking.feature.parkingspot.dto.FacilityHourlyRate;
 import com.memplas.parking.feature.parkingspot.dto.FacilitySpotCounts;
+import com.memplas.parking.feature.parkingspot.dto.FloorSpotTypeCounts;
 import com.memplas.parking.feature.parkingspot.model.SpotType;
 import com.memplas.parking.feature.parkingspot.repository.ParkingSpotRepository;
 import com.memplas.parking.feature.pricing.model.WeatherCondition;
@@ -17,8 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Performance-Critical Service: Manages availability caching for sub-50ms responses
@@ -102,7 +106,7 @@ public class AvailabilityCacheService {
 
     private BigDecimal getRateForFacility(Long facilityId) {
         Cache cache = cacheManager.getCache(CacheKeys.PRICING_RULE_CACHE);
-        if (cache == null) throw new IllegalStateException("Procong availability cache not configured");
+        if (cache == null) throw new IllegalStateException("pricing availability cache not configured");
         BigDecimal rate = cache.get(facilityId, BigDecimal.class);
         if (rate == null) {
             recalculateRateCache();
@@ -121,5 +125,32 @@ public class AvailabilityCacheService {
     private List<FacilityHourlyRate> calculateFacilityRates() {
         return pricingRuleService.getAllPricingRules().stream().map(rule -> new FacilityHourlyRate(rule.getFacility().getId(), rule.calculateRate(SpotType.REGULAR, VehicleType.CAR, 1, 1, WeatherCondition.CLEAR, false, false, false))).toList();
     }
+
+    //    ================================================================================
+    private void calculateAndCacheTypeCount(Cache cache) {
+        List<FloorSpotTypeCounts> availableSpots = spotRepository.getAllFacilitiesSpotTypeCounts();
+
+        Map<Long, List<FloorSpotTypeCounts>> grouped = availableSpots.stream()
+                .collect(Collectors.groupingBy(FloorSpotTypeCounts::facilityId));
+
+        grouped.forEach(cache::put);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<FloorSpotTypeCounts> getFacilitySpotTypeCount(Long facilityId) {
+        Cache cache = cacheManager.getCache(CacheKeys.AVAILABLE_SPOT_TYPE_COUNT);
+        if (cache == null) throw new IllegalStateException("spot type count cache not configured");
+
+        Cache.ValueWrapper wrapper = cache.get(facilityId);
+        if (wrapper != null) {
+            return (List<FloorSpotTypeCounts>) wrapper.get();
+        }
+
+        // Cache miss - calculate and cache all facilities
+        calculateAndCacheTypeCount(cache);
+        wrapper = cache.get(facilityId);
+        return wrapper != null ? (List<FloorSpotTypeCounts>) wrapper.get() : new ArrayList<>();
+    }
+
 }
 

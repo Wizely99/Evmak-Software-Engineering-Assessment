@@ -2,9 +2,12 @@ package com.memplas.parking.feature.facility.controller;
 
 import com.memplas.parking.feature.facility.dto.ParkingFacilityDto;
 import com.memplas.parking.feature.facility.service.ParkingFacilityService;
+import com.memplas.parking.feature.parkingspot.dto.FloorSpotTypeCounts;
 import com.memplas.parking.feature.parkingspot.dto.NearbyFacilitiesDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -16,9 +19,11 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/facilities")
@@ -65,6 +70,22 @@ public class ParkingFacilityController {
     })
     public ParkingFacilityDto updateFacility(@Parameter(description = "Facility ID") @PathVariable Long id, @Valid @RequestBody ParkingFacilityDto facilityDto) {
         return facilityService.updateFacility(id, facilityDto);
+    }
+
+    @GetMapping("/{facilityId}/floor-summary")
+    @Operation(summary = "Get facility floor spot summary", description = "Retrieves spot type counts grouped by floor for a facility")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Floor spot summary retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = FloorSpotTypeCounts.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Facility not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public List<FloorSpotTypeCounts> getFacilityFloorSummary(
+            @Parameter(description = "Facility ID", example = "1") @PathVariable Long facilityId) {
+        return facilityService.getFloorSpotSummary(facilityId);
     }
 
     @DeleteMapping("/{id}")

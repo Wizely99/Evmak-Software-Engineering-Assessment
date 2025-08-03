@@ -15,6 +15,13 @@ public interface ParkingSessionMapper {
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "vehicleId", source = "vehicle.id")
     @Mapping(target = "spotId", source = "spot.id")
+    @Mapping(target = "spotFloorName", source = "spot.floor.name")
+    @Mapping(target = "spotNumber", source = "spot.spotNumber")
+    @Mapping(target = "facilityAddress", source = "spot.facility.address")
+    @Mapping(target = "facilityName", source = "spot.facility.name")
+    @Mapping(target = "vehicleMake", source = "vehicle.make")
+    @Mapping(target = "vehicleModel", source = "vehicle.model")
+    @Mapping(target = "vehicleLicensePlate", source = "vehicle.licensePlate")
     ParkingSessionDto toDto(ParkingSession entity);
 
     @Mapping(target = "user.id", source = "userId")

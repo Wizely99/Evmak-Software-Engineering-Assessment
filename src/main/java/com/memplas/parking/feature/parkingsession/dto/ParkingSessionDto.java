@@ -13,6 +13,20 @@ import java.time.LocalDateTime;
 public record ParkingSessionDto(
         @Schema(hidden = true)
         Long id,
+        @Schema(hidden = true)
+        String spotFloorName,
+        @Schema(hidden = true)
+        String spotNumber,
+        @Schema(hidden = true)
+        String facilityAddress,
+        @Schema(hidden = true)
+        String facilityName,
+        @Schema(hidden = true)
+        String vehicleMake,
+        @Schema(hidden = true)
+        String vehicleLicensePlate,
+        @Schema(hidden = true)
+        String vehicleModel,
         @NotBlank(message = "Session reference is required")
         @Size(max = 50, message = "Session reference must not exceed 50 characters")
         @Pattern(regexp = "^PACK-\\d{6}$", message = "Session reference must follow PACK-XXXXXX format")

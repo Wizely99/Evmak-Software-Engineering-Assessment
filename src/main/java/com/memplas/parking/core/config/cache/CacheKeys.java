@@ -6,4 +6,6 @@ public final class CacheKeys {
     public static final String FACILITY_AVAILABILITY_CACHE = "facilityAvailability";
 
     public static final String PRICING_RULE_CACHE = "pricingRule";
+
+    public static final String AVAILABLE_SPOT_TYPE_COUNT = "availableSpotByType";
 }

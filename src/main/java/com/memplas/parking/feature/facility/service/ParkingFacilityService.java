@@ -4,6 +4,7 @@ import com.memplas.parking.feature.facility.dto.ParkingFacilityDto;
 import com.memplas.parking.feature.facility.mapper.ParkingFacilityMapper;
 import com.memplas.parking.feature.facility.model.ParkingFacility;
 import com.memplas.parking.feature.facility.repository.ParkingFacilityRepository;
+import com.memplas.parking.feature.parkingspot.dto.FloorSpotTypeCounts;
 import com.memplas.parking.feature.parkingspot.dto.NearbyFacilitiesDto;
 import com.memplas.parking.feature.parkingspot.service.AvailabilityCacheService;
 import jakarta.persistence.EntityNotFoundException;
@@ -81,4 +82,10 @@ public class ParkingFacilityService {
         facilityRepository.delete(facility);
         availabilityCacheService.evictAllCache();
     }
+
+    @Transactional(readOnly = true)
+    public List<FloorSpotTypeCounts> getFloorSpotSummary(Long facilityId) {
+        return availabilityCacheService.getFacilitySpotTypeCount(facilityId);
+    }
+
 }
