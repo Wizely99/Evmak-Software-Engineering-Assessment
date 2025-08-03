@@ -41,6 +41,10 @@ public interface ParkingSpotRepository extends JpaRepository<ParkingSpot, Long>,
                  p.facility.wheelChairAccessible,
                  p.floor.id,
                  p.floor.name,
+                 p.floor.number,
+                 p.floor.rows,
+                 p.floor.columns, 
+                 p.floor.maxHeight,
                  COALESCE(SUM(CASE WHEN p.spotType = 'REGULAR' THEN 1 ELSE 0 END), 0),
                  COALESCE(SUM(CASE WHEN p.spotType = 'DISABLED' THEN 1 ELSE 0 END), 0),
                  COALESCE(SUM(CASE WHEN p.spotType = 'EV_CHARGING' THEN 1 ELSE 0 END), 0),
@@ -49,7 +53,8 @@ public interface ParkingSpotRepository extends JpaRepository<ParkingSpot, Long>,
              )
              FROM ParkingSpot p
              WHERE p.status = 'AVAILABLE'
-            GROUP BY p.facility.id,p.facility.wheelChairAccessible, p.floor.id, p.floor.name
+            GROUP BY p.facility.id, p.facility.wheelChairAccessible, p.floor.id, p.floor.name, 
+                     p.floor.number, p.floor.rows, p.floor.columns, p.floor.maxHeight
             """)
     List<FloorSpotTypeCounts> getAllFacilitiesSpotTypeCounts();
 }

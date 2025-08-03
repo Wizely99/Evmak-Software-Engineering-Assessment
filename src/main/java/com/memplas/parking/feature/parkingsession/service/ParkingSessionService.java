@@ -90,9 +90,9 @@ public class ParkingSessionService {
         }
         boolean exists = sessionRepository.existsByVehicleIdAndStatusIn(request.vehicleId(), List.of(SessionStatus.ACTIVE, SessionStatus.RESERVED));
 
-        if (exists) {
-            throw new RuntimeException("Vehicle already has an active or reserved parking session");
-        }
+//        if (exists) {//TODO CHECK AGAIN
+//            throw new RuntimeException("Vehicle already has an active or reserved parking session");
+//        }
         var vehicle = vehicleService.getVehicleById(request.vehicleId());
         String sessionRef = generateSessionReference();
         int minutes = request.plannedDurationMinutes();
