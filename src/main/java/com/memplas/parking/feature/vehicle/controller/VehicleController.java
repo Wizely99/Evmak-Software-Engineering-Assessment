@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/vehicles")
+@RequestMapping("/vehicles")
 @Validated
 @Tag(name = "Vehicles", description = "Vehicle management operations")
 @SecurityRequirement(name = "bearerAuth")
